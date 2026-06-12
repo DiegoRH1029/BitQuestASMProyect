@@ -72,4 +72,27 @@ detectarObj:
     .siEs ;Si es el objejo regresamos 1
     mov rax,1
     ret
+;Funcion que simplemente cuenta la cantidad de celdas libres
+;int contarLibres(char *mapa, int totalCeldas)
+;                   rcx            rdx
 contCeldasLibres:
+    xor rax,rax ;nuestro contador
+    xor r9,r9 ; i
+
+    .ciclo: ;for(i=0 i<totalCeldas i++)
+    cmp r9,rdx
+    jge .fin
+
+    mov r10b, byte [rcx+r9] ;r10b = mapa[i]
+    mov r11b, '.'
+    cmp r10b,r11b;Comparamos si es igual a .
+    jne .siguiente ;Si no es igual pasamos al siguiente
+    inc rax ;contador++ si es igual
+    .siguiente:
+    inc r9 ;i++
+    jmp .ciclo
+
+    .fin:  
+    ret
+    
+

@@ -6,6 +6,7 @@
 int contarChar(char *mapa, int totCeldas, char aBuscar);
 int validarMov(char *mapa, int numColumnas, int fila, int columna);
 int detectarObj(char *mapa, int columnas, int fila, int columna, char aBuscar); 
+int contCeldasLibres(char *mapa, int totCeldas);
 //Mapa de prueba
 char mapa[FILAS][COLUMNAS] = {
     {'#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#'},
@@ -41,6 +42,7 @@ int main(){
     printf("movimiento posible : %d %c\n", validarMov(&mapa[0][0],COLUMNAS,0,0),mapa[0][0]);
     //Probando funcion validar objeto en casilla 
     printf("El objeto a buscar . es:%d %c\n",detectarObj(&mapa[0][0],COLUMNAS,1,3,'.'),mapa[1][3]);
-    printf("El objeto a buscar # es:%d %c",detectarObj(&mapa[0][0],COLUMNAS,0,0,'#'),mapa[0][0]);
+    printf("El objeto a buscar # es:%d %c\n",detectarObj(&mapa[0][0],COLUMNAS,0,0,'#'),mapa[0][0]);
+    printf("Numero celdas libres: %d",contCeldasLibres(&mapa[0][0],FILAS*COLUMNAS));
     return 0;
 }
