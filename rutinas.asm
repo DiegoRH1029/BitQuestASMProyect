@@ -2,6 +2,9 @@
  default rel
  global contarChar
  global validarMov
+ ;global calcularPuntaje pendiente
+ global detectarObj 
+ global contCeldasLibres
 
  section .text
 
@@ -48,3 +51,25 @@ validarMov:
     mov rax,0
     ret
 
+;calcularPuntaje pendiente
+;Funcion que verificara que en la posicion especifica exista ese objeto
+;int detectarObj(char *mapa, int columnas. int fila, int columna, char aBuscar)
+                ;   rcx             rdx         r8         r9           [rsp+40]
+detectarObj:
+    ;Obtendremos el indice con la sig formula
+    ; indice = (fila*numColumnas) + columna 
+    mov rax,r8 ; mandamos fila a rax para multiplicar
+    imul rax,rdx ; rax = (fila*numColumnas)
+    add rax,r9 ; (fila*numColumnas)+columna
+    ;Aqui ya tenemos el indice de la casilla
+    mov r10b, byte [rcx +rax];r10b=mapa[indice]
+    mov r11b, byte [rsp+40] ;Obtenemos el objeto a buscar desde la pila
+    cmp r10b,r11b ;Comparamos si es el objeto a buscar
+    je .siEs
+    ;Si no es el objeto regresamos 0
+    mov rax,0
+    ret
+    .siEs ;Si es el objejo regresamos 1
+    mov rax,1
+    ret
+contCeldasLibres:

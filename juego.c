@@ -5,6 +5,7 @@
 //Declaracion de funciones ensamblador
 int contarChar(char *mapa, int totCeldas, char aBuscar);
 int validarMov(char *mapa, int numColumnas, int fila, int columna);
+int detectarObj(char *mapa, int columnas, int fila, int columna, char aBuscar); 
 //Mapa de prueba
 char mapa[FILAS][COLUMNAS] = {
     {'#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#'},
@@ -38,6 +39,8 @@ int main(){
     //Probando si funciona funcion validar movimiento
     printf("movimiento posible : %d %c\n", validarMov(&mapa[0][0],COLUMNAS,1,3),mapa[1][3]);
     printf("movimiento posible : %d %c\n", validarMov(&mapa[0][0],COLUMNAS,0,0),mapa[0][0]);
-
+    //Probando funcion validar objeto en casilla 
+    printf("El objeto a buscar . es:%d %c\n",detectarObj(&mapa[0][0],COLUMNAS,1,3,'.'),mapa[1][3]);
+    printf("El objeto a buscar # es:%d %c",detectarObj(&mapa[0][0],COLUMNAS,0,0,'#'),mapa[0][0]);
     return 0;
 }
