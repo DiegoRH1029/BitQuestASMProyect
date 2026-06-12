@@ -1,6 +1,7 @@
  bits 64
  default rel
  global contarChar
+ global validarMov
 
  section .text
 
@@ -26,3 +27,24 @@
     
     .fin:
     ret 
+
+;Funcion 2: validara que el movimiento sea posible (que no sea #)
+;int validarMov(char *mapa, int numColumnas, int fila, int columna)
+;                       rcx        rdx             r8         r9
+validarMov:
+    ;Obtendremos el indice con la sig formula
+    ; indice = (fila*numColumnas) + columna 
+    mov rax,r8 ; mandamos fila a rax para multiplicar
+    imul rax,rdx ; rax = (fila*numColumnas)
+    add rax,r9 ; (fila*numColumnas)+columna
+    ;Aqui ya tenemos el indice de la casilla
+    mov r10b, byte [rcx +rax];r10b=mapa[indice]
+    cmp r10b,'#' ;Comparamos si es una pared
+    je .esPared 
+    ;Si no es pared regresamos 1
+    mov rax,1
+    ret
+    .esPared
+    mov rax,0
+    ret
+
