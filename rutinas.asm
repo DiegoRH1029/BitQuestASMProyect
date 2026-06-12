@@ -5,6 +5,8 @@
  ;global calcularPuntaje pendiente
  global detectarObj 
  global contCeldasLibres
+ ;funcion que devolvera la posicion de un caracter (primera coincidencia)
+ global posCaracter
 
  section .text
 
@@ -94,5 +96,23 @@ contCeldasLibres:
 
     .fin:  
     ret
-    
 
+;int posCaracter(char *mapa, int totCeldas, char c)
+                ;  rcx          rdx         r8
+posCaracter:
+    xor rax,rax ;i
+
+    .ciclo:;desde i=0 hasta total celdas
+        cmp rax,rdx
+        jge .noEncontrado
+        mov r10b, byte [rcx+rax];guardamos el caracter actual en r10b
+        cmp r10b,r8b ;lo comparamos con el caracter a buscar
+        je .encontrado ;si es igual se encontro
+        inc rax ;si no es igual repite el ciclo
+        jmp .ciclo 
+
+        .encontrado:
+        ret 
+        .noEncontrado:
+        mov rax,-1
+        ret 
