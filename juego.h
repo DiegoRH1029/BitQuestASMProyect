@@ -26,6 +26,7 @@ typedef struct{
     int monedas;
     int llaves;
     int movs;
+    int puntajeTot;
 } Jugador;
 typedef struct{
     int numNivel;
@@ -50,6 +51,8 @@ void imprimirMenu();
 void imprimirTitulo(const char* titulo, int colorTitulo,int colorBorde);
 
 //Funciones de flujo de juego
-int jugando(char* nombreJugador,char* nivel,int nivelActual);
+int jugando(char* nombreJugador,int nivelActual);
 int imprimirInfo(Jugador p1,Mapa mapaInfo,int completado);
+void actualizarRanking(char *nombreJugador,int puntaje);
+void imprimirVictoria(char* nombreJugador,int puntaje);
 #endif

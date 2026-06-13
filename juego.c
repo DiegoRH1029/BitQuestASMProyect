@@ -4,19 +4,15 @@
 //Matriz de nuestro mapa
 char mapa[FILAS][COLUMNAS];
 //:---------Funciones flujo del juego 
-int jugando(char* nombreJugador,char* nivel,int nivelActual){
+//Jugando es un bucle de juego por nivel, regresa el puntaje obtenido en el nivel
+int jugando(char* nombreJugador,int nivelActual){
     Jugador p1;
-    p1.nombre=nombreJugador;
-    p1.movs=0;
     struct Camara cam;
     Mapa mapaInfo;
     mapaInfo.numNivel=nivelActual;
     int juego=1;
     int completado=0;
     int direccion=1;
-    if(cargarNivel("niveles.txt",nivel)!=1){
-        return 0;
-    }
     //obtenemos la posisicion inicial del jugador desde el mapa 
     int indJugador = posCaracter(&mapa[0][0],FILAS*COLUMNAS,'P');
     if(indJugador!=-1){
@@ -24,9 +20,12 @@ int jugando(char* nombreJugador,char* nivel,int nivelActual){
         p1.col = indJugador%COLUMNAS;
         p1.monedas=0;
         p1.llaves=0;
+        p1.nombre=nombreJugador;
+        p1.movs=0;
+        p1.puntajeTot=0;
     }else{ 
         printf ("\nEl jugador no existe");
-        return 1;
+        return -1;
     } 
     mapaInfo.totalMonedas = contarChar(&mapa[0][0], FILAS*COLUMNAS, 'M');
     mapaInfo.totalLlaves = contarChar(&mapa[0][0], FILAS*COLUMNAS, 'K');
@@ -47,7 +46,7 @@ int jugando(char* nombreJugador,char* nivel,int nivelActual){
             else if(tecla=='s'||tecla=='S') { nuevaFila++; direccion = 0; }
             else if(tecla=='a'||tecla=='A') { nuevaCol--; direccion = 2; }
             else if(tecla=='d'||tecla=='D') { nuevaCol++; direccion = 3; }
-            else if(tecla=='q'||tecla=='Q') break;
+            else if(tecla=='q'||tecla=='Q'){ juego = 0;}
             //Llamamos si el movimiento es valido
             char objeto='0';
             int puedeAvanzar=0;
@@ -65,8 +64,9 @@ int jugando(char* nombreJugador,char* nivel,int nivelActual){
                         puedeAvanzar=1;
                         break;
                     case 'E'://El objeto es la salida
-                        if(p1.llaves>0) {juego=3; puedeAvanzar=1; completado=1;}
-                        if(p1.llaves!=0)p1.llaves--;
+                        juego = 0;
+                        puedeAvanzar=1;
+                        completado=1;
                         break;
                     case 'M'://El objeto es una moneda
                         puedeAvanzar=1;
@@ -97,27 +97,32 @@ int jugando(char* nombreJugador,char* nivel,int nivelActual){
         Sleep(25);
     }
     system("cls");
-    imprimirMapaDiseno(&mapa[0][0],cam.fila,cam.col,direccion);
-    return imprimirInfo(p1,mapaInfo,completado);
+    p1.puntajeTot=calcularPuntaje(p1.monedas,p1.movs);
+    if(imprimirInfo(p1,mapaInfo,completado)){
+        return p1.puntajeTot;
+    }
+    else{
+        return -1;
+    }
 }
 
 //Funcion que imprimira la informacion del nivel completado
 int imprimirInfo(Jugador p1,Mapa mapaInfo,int completado){
     char mensaje[50];
     if(completado){
-        imprimirTitulo("F E L I C I D A D E S",10,9);
+        imprimirTitulo("F E L I C I D A D E S",14,9);
         sprintf(mensaje,"Nivel -%d- completado",mapaInfo.numNivel);
         imprimirTitulo(mensaje,10,9);
         printf("\n");
-        imprimirTitulo("E S T A D I S T I C A S",10,9);
+        imprimirTitulo("E S T A D I S T I C A S",14,9);
         sprintf(mensaje,"Llaves sobrantes: %d",p1.llaves);
-        imprimirTitulo(mensaje,10,9);
+        imprimirTitulo(mensaje,11,11);
         sprintf(mensaje,"Monedas: %d / %d",p1.monedas,mapaInfo.totalMonedas);
-        imprimirTitulo(mensaje,10,9);
+        imprimirTitulo(mensaje,14,14);
         sprintf(mensaje,"Total movimientos: %d",p1.movs);
-        imprimirTitulo(mensaje,10,9);
-        sprintf(mensaje,"Puntaje: %d",calcularPuntaje(p1.monedas,p1.movs));
-        imprimirTitulo(mensaje,10,9);
+        imprimirTitulo(mensaje,10,10);
+        sprintf(mensaje,"Puntaje: %d",p1.puntajeTot);
+        imprimirTitulo(mensaje,12,12);
         printf("Desea continuar? (y/n): ");
         char resp;
         do{
@@ -127,21 +132,57 @@ int imprimirInfo(Jugador p1,Mapa mapaInfo,int completado){
         else{system("cls"); return 0;}   
     }
     else{
-        imprimirTitulo("SUERTE PARA LA PROXIMA",10,9);
+        imprimirTitulo("SUERTE PARA LA PROXIMA",12,12);
         sprintf(mensaje,"Nivel -%d- no completado",mapaInfo.numNivel);
         imprimirTitulo(mensaje,10,9);
         printf("\n");
-        imprimirTitulo("E S T A D I S T I C A S",10,9);
+        imprimirTitulo("E S T A D I S T I C A S",14,9);
         sprintf(mensaje,"Llaves sobrantes: %d",p1.llaves);
-        imprimirTitulo(mensaje,10,9);
+        imprimirTitulo(mensaje,11,11);
         sprintf(mensaje,"Monedas: %d / %d",p1.monedas,mapaInfo.totalMonedas);
-        imprimirTitulo(mensaje,10,9);
+        imprimirTitulo(mensaje,14,14);
         sprintf(mensaje,"Total movimientos: %d",p1.movs);
-        imprimirTitulo(mensaje,10,9);
-        sprintf(mensaje,"Puntaje: N/A");
-        imprimirTitulo(mensaje,10,9);
+        imprimirTitulo(mensaje,10,10);
         system("pause");
+        return 0;
     }
+}
+void actualizarRanking(char *nombreJugador,int puntaje){
+    // Abrimos el archivo en modo "a" (añadir)
+    FILE *archivo = fopen("rankings.txt", "a");
+    if (archivo==NULL) {
+        cambiarColor(12); // Rojo
+        printf("\nError: No se pudo guardar el ranking.\n");
+        cambiarColor(7);
+        return;
+    }
+    // Guardamos el puntaje primero para que sea más fácil de ordenar después
+    fprintf(archivo, "%d - %s\n", puntaje, nombreJugador);
+    fclose(archivo);
+}
+void imprimirVictoria(char* nombreJugador,int puntaje){
+    system("cls");
+    printf("\n\n");
+    // Título principal
+    imprimirTitulo(" V I C T O R I A !", 14, 9);
+    printf("\n");
+    char mensajeJugador[50];
+    sprintf(mensajeJugador, "Felicidades, %s", nombreJugador);
+    imprimirTitulo(mensajeJugador, 15, 9); // Texto blanco
+    imprimirTitulo("Has escapado del laberinto", 11, 9); // Texto celeste
+    printf("\n");
+    
+    char mensajePuntaje[50];
+    sprintf(mensajePuntaje, "PUNTAJE TOTAL: %d", puntaje);
+    imprimirTitulo(mensajePuntaje, 10, 9); // Texto verde brillante
+    printf("\n\n");
+    cambiarColor(8); // Gris oscuro
+    printf("                       Presiona cualquier tecla para continuar...\n");
+    cambiarColor(7);
+    
+    // Limpiamos el buffer
+    while(_kbhit()) _getch(); 
+    _getch();
 }
 //Funcion que retorna la nueva estrucura de camara;
 void cambiarColor(int color) {
@@ -332,11 +373,12 @@ void imprimirTitulo(const char* titulo, int colorTitulo,int colorBorde) {
 }
 //Funcion que se encargara de cargar un nivel desde el archivo niveles.txt
 //recibe el nombre del archivo y el nivel a bscar (--nivel 1, --nivel 2 etc)
+//Regresa -1 si ocurrio un error, 0 si no se encontro el nivel, 1 si el nivel fue cargado bien
 int cargarNivel(const char* nombreArchivo, const char* nivelABuscar){
     FILE *archivo = fopen(nombreArchivo,"r");
     if(archivo==NULL){
         printf("Archivo no encontrado o no valido");
-        return 0;
+        return -1;
     }
     char buffer[100]; //Buffer para guardar una linea completa del archivo
     int nivelEncontrado=0;
@@ -357,12 +399,12 @@ int cargarNivel(const char* nombreArchivo, const char* nivelABuscar){
         if(fgets(buffer,sizeof(buffer),archivo)==NULL){
             printf("Error faltan filas");
             fclose(archivo);
-            return 0;
+            return -1;
         }
         if(strstr(buffer,"--nivel ")!=NULL){
             printf("Error :Mapa incompleto");
             fclose(archivo);
-            return 0;
+            return -1;
         }
         //Metemos caracter por caracter
         for(int j=0;j<COLUMNAS;j++){

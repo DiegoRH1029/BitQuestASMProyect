@@ -65,10 +65,35 @@ int main(){
                 } else {
                     // Arrancamos tu funcion jugando de juego.c
                     // Le pasamos el nombre, el string del archivo txt y el entero para el HUD
-                    if(jugando(nombreJugador, "--nivel 1", 1)==0)break;  
-                    else if(jugando(nombreJugador, "--nivel 2", 2)==0)break; 
-                    else if(jugando(nombreJugador, "--nivel 3", 3)==0)break;
+                    int nivel=1;
+                    int puntaje=0;
+                    int jugandoNiveles=1;
+                    while(jugandoNiveles){
+                        char nombreNivel[20];
+                        sprintf(nombreNivel,"--nivel %d",nivel);
+                        int estadoCarga = cargarNivel("niveles.txt",nombreNivel);
+                        if(estadoCarga==0){//Si es 0 ya no hay mas niveles por lo tanto es victoria
+                            actualizarRanking(nombreJugador,puntaje);
+                            imprimirVictoria(nombreJugador,puntaje);
+                            jugandoNiveles=0;
+                        }
+                        else if(estadoCarga==-1){ //Archivo roto o incompleto
+                            system("pause");
+                            jugandoNiveles=0;
+                        }
+                        else{//El mapa ya esta cargadoo asi que empezamos a jugar
+                            //jugando regresa el puntaje o -1 si ocurrio un error
+                            int resultado=jugando(nombreJugador,nivel);
+                            if(resultado==-1){//Ocurrio un error o no termino nivel
+                                jugandoNiveles=0;
+                            }else{
+                                nivel++;
+                                puntaje+=resultado;
+                            }
+                        }
+                    }
                 }
+                    break;
             case 'R': //Para ver los rankigs
                 system("cls");
                 cambiarColor(14);
