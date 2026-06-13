@@ -1,5 +1,9 @@
 #ifndef JUEGO_H
 #define JUEGO_H
+#include <conio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <ctype.h>
 #include <windows.h>
 #define FILAS 60
 #define COLUMNAS 60
@@ -15,12 +19,15 @@ extern char mapa[FILAS][COLUMNAS];
 //Estructuras
 //struct jugador, es para guardar la fila y columna actual del jugador
 typedef struct{
+    char* nombre;
     int fila;
     int col;
     int monedas;
     int llaves;
+    int movs;
 } Jugador;
 typedef struct{
+    int numNivel;
     int totalMonedas;
     int totalLlaves;
     int totalEnemigos;
@@ -38,4 +45,10 @@ void moverCursor00();
 int cargarNivel(const char* nombreArchivo, const char* nivelABuscar);
 struct Camara nuevaCamara(struct Camara camActual,int fila, int col);
 void imprimirHUD(int nivel, int monedas, int llaves,int totLlaves,int totMonedas);
+void imprimirMenu();
+void imprimirTitulo(const char* titulo, int colorTitulo,int colorBorde);
+
+//Funciones de flujo de juego
+int jugando(char* nombreJugador,char* nivel,int nivelActual);
+int imprimirInfo(Jugador p1,Mapa mapaInfo);
 #endif

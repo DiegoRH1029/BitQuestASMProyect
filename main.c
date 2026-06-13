@@ -1,116 +1,97 @@
 #include <stdio.h>
-#include <conio.h>
-#include <stdlib.h>
 #include "juego.h"
 
 int main(){
-    /*
-    //Proband si funciona funcion contar caracteres
-    int totalMonedas = contarChar(&mapa[0][0], FILAS*COLUMNAS, 'M');   
-    printf("Total monedas : %d\n",totalMonedas);
-    printf("Total paredes: %d\n",contarChar(&mapa[0][0], FILAS*COLUMNAS, '#'));
-    printf("Total Caminos: %d\n",contarChar(&mapa[0][0], FILAS*COLUMNAS, '.'));
-    //Probando si funciona funcion validar movimiento
-    printf("movimiento posible : %d %c\n", validarMov(&mapa[0][0],COLUMNAS,1,3),mapa[1][3]);
-    printf("movimiento posible : %d %c\n", validarMov(&mapa[0][0],COLUMNAS,0,0),mapa[0][0]);
-    //Probando funcion validar objeto en casilla 
-    printf("El objeto a buscar . es:%d %c\n",detectarObj(&mapa[0][0],COLUMNAS,1,3,'.'),mapa[1][3]);
-    printf("El objeto a buscar # es:%d %c\n",detectarObj(&mapa[0][0],COLUMNAS,0,0,'#'),mapa[0][0]);
-    printf("Numero celdas libres: %d",contCeldasLibres(&mapa[0][0],FILAS*COLUMNAS));
-    // esto configura la consola para los caracteres extendidos
-    */
+// Configuracion inicial de la ventana de Windows
     system("chcp 437 > nul"); 
-    // Forzar maximizado de la consola nativa de Windows
-    Jugador p1;
-    struct Camara cam;
-    Mapa mapaInfo;
-    int jugando=1;
-    int direccion=1;
-    if(cargarNivel("niveles.txt","--nivel 2")!=1){
-        return 0;
-    }
-    int nivelActual=2;
-    //obtenemos la posisicion inicial del jugador desde el mapa 
-    int indJugador = posCaracter(&mapa[0][0],FILAS*COLUMNAS,'P');
-    if(indJugador!=-1){
-        p1.fila = indJugador/COLUMNAS;
-        p1.col = indJugador%COLUMNAS;
-        p1.monedas=0;
-        p1.llaves=0;
-    }else{ 
-        printf ("\nEl jugador no existe");
-        return 1;
-    } 
-    mapaInfo.totalMonedas = contarChar(&mapa[0][0], FILAS*COLUMNAS, 'M');
-    mapaInfo.totalLlaves = contarChar(&mapa[0][0], FILAS*COLUMNAS, 'K');
-    //Centramos la camara respecto al jugador
-    cam.fila = p1.fila-10;
-    cam.col = p1.col -10;
-
-    // mandamos llamar la funcion con el diseño 
-    printf("Precione cualquier tecla para iniciar");
-    system("pause");
+    
+    int modoGrafico = 0;
+    char motor;
+    
+    // Selector de Motor grafico
     system("cls");
-    while(jugando){
-        moverCursor00();
-        cam = nuevaCamara(cam,p1.fila,p1.col);
-        imprimirHUD(nivelActual,p1.monedas,p1.llaves,mapaInfo.totalLlaves,mapaInfo.totalMonedas);
-        imprimirMapaDiseno(&mapa[0][0],cam.fila,cam.col,direccion);
-        if(_kbhit()){ //Detecta si una tecla se preciono
-            char tecla = _getch();//guardamos tecla 
-            int nuevaFila = p1.fila;//fila
-            int nuevaCol = p1.col;//comulmans
-            // Actualizamos coordenadas y la direccion visual
-            if(tecla=='w'||tecla=='W') { nuevaFila--; direccion = 1; }
-            else if(tecla=='s'||tecla=='S') { nuevaFila++; direccion = 0; }
-            else if(tecla=='a'||tecla=='A') { nuevaCol--; direccion = 2; }
-            else if(tecla=='d'||tecla=='D') { nuevaCol++; direccion = 3; }
-            else if(tecla=='q'||tecla=='Q') break;
-            //Llamamos si el movimiento es valido
-            char objeto='0';
-            int puedeAvanzar=0;
-            int movimientoValido=validarMov(&mapa[0][0],COLUMNAS,nuevaFila,nuevaCol);
-            if(movimientoValido==1){//Si es valido vamos al siguiente movimiento
-                if(detectarObj(&mapa[0][0],COLUMNAS,nuevaFila,nuevaCol,'.')) objeto ='.';
-                if(detectarObj(&mapa[0][0],COLUMNAS,nuevaFila,nuevaCol,'E')) objeto ='E';
-                if(detectarObj(&mapa[0][0],COLUMNAS,nuevaFila,nuevaCol,'M')) objeto ='M';
-                if(detectarObj(&mapa[0][0],COLUMNAS,nuevaFila,nuevaCol,'K')) objeto ='K';
-                if(detectarObj(&mapa[0][0],COLUMNAS,nuevaFila,nuevaCol,'D')) objeto ='D';
-
-                if(objeto!='0'){
-                    switch (objeto){
-                    case '.'://El objeto es un camino
-                        puedeAvanzar=1;
-                        break;
-                    case 'E'://El objeto es la salida
-                        break;
-                    case 'M'://El objeto es una moneda
-                        puedeAvanzar=1;
-                        p1.monedas++;
-                        break;
-                    case 'K'://El objeto es una llave
-                        puedeAvanzar=1;
-                        p1.llaves++;
-                        break;
-                    case 'D'://El objeto es una puerta
-                        puedeAvanzar = (p1.llaves>0);
-                        if(p1.llaves!=0)p1.llaves--;
-                        break;
-                    default:
-                        break;
-                    }
-                }
-                    if(puedeAvanzar){
-                        mapa[p1.fila][p1.col] = '.';
-                        p1.fila=nuevaFila;
-                        p1.col=nuevaCol;
-                        mapa[p1.fila][p1.col]='P';
-                    }
-
-            }
-        }
-        Sleep(25);
+    cambiarColor(15);
+    printf("=== SELECCION DE MOTOR DE RENDERIZADO ===\n\n");
+    cambiarColor(7);
+    printf("1) Modo Consola\n");
+    printf("2) Modo Allegro (En desarrollo)\n");
+    printf("\nElige una opcion (1-2): ");
+    
+    motor=_getch(); // Lee la tecla sin necesidad de dar Enter
+    if(motor=='2'){
+        modoGrafico=1;
     }
-    system("pause");
+
+    // Variables para el menu principal
+    char opcion;
+    char nombreJugador[50];
+    int salir = 0;
+
+    //Loop del menu principal
+    while(!salir){
+        system("cls");
+        
+        imprimirMenu();
+        //pa saber en que modo estamos corriendo
+        if(modoGrafico) printf("\n[Motor: Allegro Activo]\n");
+        else printf("\n[Motor: Consola Activo]\n");
+        printf("\nSelecciona una opcion: ");
+        
+        // toupper convierte 'p' minuscula a 'P' mayuscula automaticamente
+        opcion = toupper(_getch()); 
+
+        //El Switch Principal
+        switch (opcion) {
+            case 'P':
+                system("cls");
+                cambiarColor(10);
+                imprimirTitulo("=== NUEVA PARTIDA ===",9,9);
+                cambiarColor(7);
+                printf("Ingresa tu nombre de jugador: ");
+                
+                // Leemos el nombre con espacios permitidos
+                fflush(stdin);
+                fgets(nombreJugador, 50, stdin);
+                
+                // fgets guarda el enter  al final, con esto se lo quitamos:
+                nombreJugador[strcspn(nombreJugador, "\n")] = 0; 
+                
+                if (modoGrafico) {
+                    // Aqui despues se conecta a allegro
+                    cambiarColor(11);
+                    printf("\nIniciando ventana de Allegro para %s...\n", nombreJugador);
+                    cambiarColor(7);
+                    system("pause");
+                } else {
+                    // Arrancamos tu funcion jugando de juego.c
+                    // Le pasamos el nombre, el string del archivo txt y el entero para el HUD
+                    if(jugando(nombreJugador, "--nivel 1", 1)==0) salir=1;  
+                    else if(jugando(nombreJugador, "--nivel 2", 1)==0) salir=1; 
+                    else if(jugando(nombreJugador, "--nivel 3", 1)==0) salir=1;
+                }
+                break;
+
+            case 'R': //Para ver los rankigs
+                system("cls");
+                cambiarColor(14);
+                printf("=== RANKINGS DE JUGADORES ===\n\n");
+                cambiarColor(7);
+                printf("Aqui se imprimira el archivo de puntajes en el futuro.\n\n");
+                system("pause");
+                break;
+
+            case 'E': //Para salir
+                salir = 1;
+                system("cls");
+                cambiarColor(12);
+                printf("Cerrando motor...\n");
+                cambiarColor(7);
+                break;
+
+            default:
+                // Si presionan una tecla invalida, el while simplemente vuelve a pintar el menu
+                break;
+        }
+    }
     return 0;
 }

@@ -1,12 +1,127 @@
 #include <stdio.h>
-#include <windows.h>
-#include <conio.h>
-#include <stdlib.h>
-#include <string.h>
 #include "juego.h"
 
 //Matriz de nuestro mapa
 char mapa[FILAS][COLUMNAS];
+//:---------Funciones flujo del juego 
+int jugando(char* nombreJugador,char* nivel,int nivelActual){
+    Jugador p1;
+    p1.nombre=nombreJugador;
+    p1.movs=0;
+    struct Camara cam;
+    Mapa mapaInfo;
+    mapaInfo.numNivel=nivelActual;
+    int juego=1;
+    int direccion=1;
+    if(cargarNivel("niveles.txt",nivel)!=1){
+        return 0;
+    }
+    //obtenemos la posisicion inicial del jugador desde el mapa 
+    int indJugador = posCaracter(&mapa[0][0],FILAS*COLUMNAS,'P');
+    if(indJugador!=-1){
+        p1.fila = indJugador/COLUMNAS;
+        p1.col = indJugador%COLUMNAS;
+        p1.monedas=0;
+        p1.llaves=0;
+    }else{ 
+        printf ("\nEl jugador no existe");
+        return 1;
+    } 
+    mapaInfo.totalMonedas = contarChar(&mapa[0][0], FILAS*COLUMNAS, 'M');
+    mapaInfo.totalLlaves = contarChar(&mapa[0][0], FILAS*COLUMNAS, 'K');
+    //Centramos la camara respecto al jugador
+    cam.fila = p1.fila-10;
+    cam.col = p1.col -10;
+        while(juego){
+        moverCursor00();
+        cam = nuevaCamara(cam,p1.fila,p1.col);
+        imprimirHUD(nivelActual,p1.monedas,p1.llaves,mapaInfo.totalLlaves,mapaInfo.totalMonedas);
+        imprimirMapaDiseno(&mapa[0][0],cam.fila,cam.col,direccion);
+        if(_kbhit()){ //Detecta si una tecla se preciono
+            char tecla = _getch();//guardamos tecla 
+            int nuevaFila = p1.fila;//fila
+            int nuevaCol = p1.col;//comulmans
+            // Actualizamos coordenadas y la direccion visual
+            if(tecla=='w'||tecla=='W') { nuevaFila--; direccion = 1; }
+            else if(tecla=='s'||tecla=='S') { nuevaFila++; direccion = 0; }
+            else if(tecla=='a'||tecla=='A') { nuevaCol--; direccion = 2; }
+            else if(tecla=='d'||tecla=='D') { nuevaCol++; direccion = 3; }
+            else if(tecla=='q'||tecla=='Q') break;
+            //Llamamos si el movimiento es valido
+            char objeto='0';
+            int puedeAvanzar=0;
+            int movimientoValido=validarMov(&mapa[0][0],COLUMNAS,nuevaFila,nuevaCol);
+            if(movimientoValido==1){//Si es valido vamos al siguiente movimiento
+                if(detectarObj(&mapa[0][0],COLUMNAS,nuevaFila,nuevaCol,'.')) objeto ='.';
+                if(detectarObj(&mapa[0][0],COLUMNAS,nuevaFila,nuevaCol,'E')) objeto ='E';
+                if(detectarObj(&mapa[0][0],COLUMNAS,nuevaFila,nuevaCol,'M')) objeto ='M';
+                if(detectarObj(&mapa[0][0],COLUMNAS,nuevaFila,nuevaCol,'K')) objeto ='K';
+                if(detectarObj(&mapa[0][0],COLUMNAS,nuevaFila,nuevaCol,'D')) objeto ='D';
+
+                if(objeto!='0'){
+                    switch (objeto){
+                    case '.'://El objeto es un camino
+                        puedeAvanzar=1;
+                        break;
+                    case 'E'://El objeto es la salida
+                        if(p1.llaves>0) {juego=0; puedeAvanzar=1;}
+                        if(p1.llaves!=0)p1.llaves--;
+                        break;
+                    case 'M'://El objeto es una moneda
+                        puedeAvanzar=1;
+                        p1.monedas++;
+                        break;
+                    case 'K'://El objeto es una llave
+                        puedeAvanzar=1;
+                        p1.llaves++;
+                        break;
+                    case 'D'://El objeto es una puerta
+                        puedeAvanzar = (p1.llaves>0);
+                        if(p1.llaves!=0)p1.llaves--;
+                        break;
+                    default:
+                        break;
+                    }
+                }
+                if(puedeAvanzar){
+                    mapa[p1.fila][p1.col] = '.';
+                    p1.fila=nuevaFila;
+                    p1.col=nuevaCol;
+                    mapa[p1.fila][p1.col]='P';
+                    p1.movs++;
+                }
+
+            }
+        }
+        Sleep(25);
+    }
+    system("cls");
+    imprimirMapaDiseno(&mapa[0][0],cam.fila,cam.col,direccion);
+    return imprimirInfo(p1,mapaInfo);
+}
+
+//Funcion que imprimira la informacion del nivel completado
+int imprimirInfo(Jugador p1,Mapa mapaInfo){
+    char mensaje[50];
+    imprimirTitulo("F E L I C I D A D E S",10,9);
+    sprintf(mensaje,"Nivel -%d- completado",mapaInfo.numNivel);
+    imprimirTitulo(mensaje,10,9);
+    printf("\n");
+    imprimirTitulo("E S T A D I S T I C A S",10,9);
+    sprintf(mensaje,"Llaves sobrantes: %d",p1.llaves);
+    imprimirTitulo(mensaje,10,9);
+    sprintf(mensaje,"Monedas: %d / %d",p1.monedas,mapaInfo.totalMonedas);
+    imprimirTitulo(mensaje,10,9);
+    sprintf(mensaje,"Total movimientos: %d",p1.movs);
+    imprimirTitulo(mensaje,10,9);
+    printf("Desea continuar? (y/n): ");
+    char resp;
+    do{
+        resp=toupper(_getch());
+    }while(resp!='Y'&&resp!='N');
+if(resp=='Y'){system("cls"); return 1;}
+else{system("cls"); return 0;}
+}
 //Funcion que retorna la nueva estrucura de camara;
 void cambiarColor(int color) {
     HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
@@ -105,6 +220,15 @@ void moverCursor00(){
     COORD pos = {0,0};
     SetConsoleCursorPosition(hconsole,pos);
 }
+//Funcion para impirmir nuestro menu principal
+void imprimirMenu(){
+            // Dibujamos un Menu tipo Arcade
+    imprimirTitulo("B I T Q U E S T",14,9);
+    printf("\n");
+    imprimirTitulo("[P] J u g a r",10,10);
+    imprimirTitulo("[R] R a n k i n g",14,14);  
+    imprimirTitulo("[S] S a l i r",12,12);       
+}
 //Funcion que se encarga de imprimir la HUD (total llaves, nivel actual etc)
 void imprimirHUD(int nivel, int monedas, int llaves, int totLlaves, int totMonedas) {
     cambiarColor(9); // Azul para el marco
@@ -152,6 +276,38 @@ void imprimirHUD(int nivel, int monedas, int llaves, int totLlaves, int totMoned
     printf("%c\n", 188); 
 
     cambiarColor(7); // Color normal
+}
+//Funcion que imprime un titulo en medio de l_____l
+void imprimirTitulo(const char* titulo, int colorTitulo,int colorBorde) {
+    int anchoCaja = 36;
+    int largoTitulo = strlen(titulo);
+    
+    // Calculamos cuantos espacios en blanco van a la izquierda y a la derecha
+    int espaciosIzq=(anchoCaja - largoTitulo) / 2;
+    int espaciosDer=anchoCaja - largoTitulo - espaciosIzq;
+
+    cambiarColor(colorBorde); // Color del borde 
+    
+    //Techo
+    printf("%c", 201); 
+    for(int i = 0; i < anchoCaja; i++) printf("%c", 205); 
+    printf("%c\n", 187);
+
+    //Paredes y texto
+    printf("%c", 186); // Pared izquierda
+    cambiarColor(colorTitulo); // Aplicamos el color de la letra
+    
+    for(int i=0; i<espaciosIzq; i++) printf(" ");
+    printf("%s", titulo);
+    for(int i=0; i<espaciosDer; i++) printf(" ");
+    
+    cambiarColor(colorBorde); // Regresamos al color del marco
+    printf("%c\n", 186); // Pared derecha
+
+    // Piso
+    printf("%c", 200); 
+    for(int i=0;i<anchoCaja; i++)printf("%c", 205); 
+    printf("%c\n", 188);
 }
 //Funcion que se encargara de cargar un nivel desde el archivo niveles.txt
 //recibe el nombre del archivo y el nivel a bscar (--nivel 1, --nivel 2 etc)
