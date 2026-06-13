@@ -53,7 +53,7 @@ int main(){
                 fflush(stdin);
                 fgets(nombreJugador, 50, stdin);
                 
-                // fgets guarda el enter  al final, con esto se lo quitamos:
+                // fgets guarda el enter al final, con esto se lo quitamos:
                 nombreJugador[strcspn(nombreJugador, "\n")] = 0; 
                 
                 if (modoGrafico) {
@@ -63,37 +63,53 @@ int main(){
                     cambiarColor(7);
                     system("pause");
                 } else {
-                    // Arrancamos tu funcion jugando de juego.c
-                    // Le pasamos el nombre, el string del archivo txt y el entero para el HUD
-                    int nivel=1;
-                    int puntaje=0;
-                    int jugandoNiveles=1;
+                    // Arrancamos la logica de niveles
+                    int nivel = 1;
+                    int jugandoNiveles = 1;
+                    
+                    // Variables para el resumen final
+                    int maxMonedasGlobales = 0; 
+                    int nivelesCompletados = 0;
+                    
+                    Jugador p1;
+                    p1.nombre = nombreJugador;
+                    p1.monedas = 0;
+                    p1.llaves = 0;
+                    p1.movs = 0;
+                    p1.totalMovs = 0; // Inicializamos total movimientos
+                    p1.puntajeTot = 0;
+                    
                     while(jugandoNiveles){
                         char nombreNivel[20];
                         sprintf(nombreNivel,"--nivel %d",nivel);
                         int estadoCarga = cargarNivel("niveles.txt",nombreNivel);
-                        if(estadoCarga==0){//Si es 0 ya no hay mas niveles por lo tanto es victoria
-                            actualizarRanking(nombreJugador,puntaje);
-                            imprimirVictoria(nombreJugador,puntaje);
-                            jugandoNiveles=0;
+                        
+                        if(estadoCarga == 0){ // Si es 0 ya no hay mas niveles por lo tanto es victoria
+                            actualizarRanking(nombreJugador, p1.puntajeTot);
+                            imprimirVictoria(p1, maxMonedasGlobales, nivelesCompletados); 
+                            jugandoNiveles = 0;
                         }
-                        else if(estadoCarga==-1){ //Archivo roto o incompleto
+                        else if(estadoCarga == -1){ // Archivo roto o incompleto
                             system("pause");
-                            jugandoNiveles=0;
+                            jugandoNiveles = 0;
                         }
-                        else{//El mapa ya esta cargadoo asi que empezamos a jugar
-                            //jugando regresa el puntaje o -1 si ocurrio un error
-                            int resultado=jugando(nombreJugador,nivel);
-                            if(resultado==-1){//Ocurrio un error o no termino nivel
-                                jugandoNiveles=0;
-                            }else{
+                        else { // El mapa ya esta cargado asi que empezamos a jugar
+                            
+                            // Jugando ahora regresa nuestra nueva estructura empaquetada
+                            ResultadoNivel res = jugando(p1, nivel);
+                            
+                            if(res.estado == -1){ // Ocurrio un error, perdio o selecciono 'N'
+                                jugandoNiveles = 0;
+                            } else {
+                                p1 = res.jugador; // Actualizamos a nuestro jugador central
+                                maxMonedasGlobales += res.maxMonedasNivel; // Sumamos la capacidad del nivel
+                                nivelesCompletados++;
                                 nivel++;
-                                puntaje+=resultado;
                             }
                         }
                     }
                 }
-                    break;
+                break;
             case 'R': //Para ver los rankigs
                 system("cls");
                 cambiarColor(14);

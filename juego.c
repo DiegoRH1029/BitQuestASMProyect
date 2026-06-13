@@ -4,39 +4,44 @@
 //Matriz de nuestro mapa
 char mapa[FILAS][COLUMNAS];
 //:---------Funciones flujo del juego 
-//Jugando es un bucle de juego por nivel, regresa el puntaje obtenido en el nivel
-int jugando(char* nombreJugador,int nivelActual){
-    Jugador p1;
+//Jugando es un bucle de juego por nivel, regresa un paquete con stats del nivel y el jugador
+ResultadoNivel jugando(Jugador p1, int nivelActual){
+    ResultadoNivel res;
     struct Camara cam;
     Mapa mapaInfo;
     mapaInfo.numNivel=nivelActual;
     int juego=1;
     int completado=0;
     int direccion=1;
+    
     //obtenemos la posisicion inicial del jugador desde el mapa 
     int indJugador = posCaracter(&mapa[0][0],FILAS*COLUMNAS,'P');
     if(indJugador!=-1){
         p1.fila = indJugador/COLUMNAS;
         p1.col = indJugador%COLUMNAS;
-        p1.monedas=0;
-        p1.llaves=0;
-        p1.nombre=nombreJugador;
-        p1.movs=0;
-        p1.puntajeTot=0;
-    }else{ 
+    }   
+    else{ 
         printf ("\nEl jugador no existe");
-        return -1;
+        res.estado = -1;
+        res.jugador = p1;
+        return res;
     } 
     mapaInfo.totalMonedas = contarChar(&mapa[0][0], FILAS*COLUMNAS, 'M');
     mapaInfo.totalLlaves = contarChar(&mapa[0][0], FILAS*COLUMNAS, 'K');
+    
+    // Guardamos la maxima capacidad de monedas del nivel actual
+    res.maxMonedasNivel = mapaInfo.totalMonedas; 
+    
     //Centramos la camara respecto al jugador
     cam.fila = p1.fila-10;
     cam.col = p1.col -10;
-        while(juego){
+        
+    while(juego){
         moverCursor00();
         cam = nuevaCamara(cam,p1.fila,p1.col);
         imprimirHUD(nivelActual,p1.monedas,p1.llaves,mapaInfo.totalLlaves,mapaInfo.totalMonedas);
         imprimirMapaDiseno(&mapa[0][0],cam.fila,cam.col,direccion);
+        
         if(_kbhit()){ //Detecta si una tecla se preciono
             char tecla = _getch();//guardamos tecla 
             int nuevaFila = p1.fila;//fila
@@ -47,10 +52,12 @@ int jugando(char* nombreJugador,int nivelActual){
             else if(tecla=='a'||tecla=='A') { nuevaCol--; direccion = 2; }
             else if(tecla=='d'||tecla=='D') { nuevaCol++; direccion = 3; }
             else if(tecla=='q'||tecla=='Q'){ juego = 0;}
+            
             //Llamamos si el movimiento es valido
             char objeto='0';
             int puedeAvanzar=0;
             int movimientoValido=validarMov(&mapa[0][0],COLUMNAS,nuevaFila,nuevaCol);
+            
             if(movimientoValido==1){//Si es valido vamos al siguiente movimiento
                 if(detectarObj(&mapa[0][0],COLUMNAS,nuevaFila,nuevaCol,'.')) objeto ='.';
                 if(detectarObj(&mapa[0][0],COLUMNAS,nuevaFila,nuevaCol,'E')) objeto ='E';
@@ -96,14 +103,27 @@ int jugando(char* nombreJugador,int nivelActual){
         }
         Sleep(25);
     }
+    
     system("cls");
-    p1.puntajeTot=calcularPuntaje(p1.monedas,p1.movs);
+    
+   //calculamos puntaje global y actualizamos movimientos
+    p1.puntajeTot += calcularPuntaje(p1.monedas,p1.movs);
+    p1.totalMovs += p1.movs;
+    p1.totalMonedas+=p1.monedas;
+    
     if(imprimirInfo(p1,mapaInfo,completado)){
-        return p1.puntajeTot;
+        //si continua, limpiamos los pasos locales para que no afecten el sig nivel
+        p1.movs = 0; 
+        p1.monedas=0;
+        p1.llaves=0;
+        res.estado = 1;
     }
     else{
-        return -1;
+        res.estado = -1; //Señal que salio del juego
     }
+    
+    res.jugador = p1;
+    return res;
 }
 
 //Funcion que imprimira la informacion del nivel completado
@@ -160,27 +180,37 @@ void actualizarRanking(char *nombreJugador,int puntaje){
     fprintf(archivo, "%d - %s\n", puntaje, nombreJugador);
     fclose(archivo);
 }
-void imprimirVictoria(char* nombreJugador,int puntaje){
+void imprimirVictoria(Jugador p1, int maxMonedasTotales, int nivelesTotales) {
     system("cls");
     printf("\n\n");
+    
     // Título principal
-    imprimirTitulo(" V I C T O R I A !", 14, 9);
+    imprimirTitulo("V I C T O R I A !", 14, 9); // Texto amarillo, borde azul
     printf("\n");
-    char mensajeJugador[50];
-    sprintf(mensajeJugador, "Felicidades, %s", nombreJugador);
-    imprimirTitulo(mensajeJugador, 15, 9); // Texto blanco
-    imprimirTitulo("Has escapado del laberinto", 11, 9); // Texto celeste
+    char mensaje[50]; 
+    sprintf(mensaje, "Felicidades, %s", p1.nombre);
+    imprimirTitulo(mensaje, 15, 9); // Texto blanco, borde azul
+    
+    imprimirTitulo("Has escapado del laberinto", 11, 9); // Texto celeste, borde azul
     printf("\n");
     
-    char mensajePuntaje[50];
-    sprintf(mensajePuntaje, "PUNTAJE TOTAL: %d", puntaje);
-    imprimirTitulo(mensajePuntaje, 10, 9); // Texto verde brillante
+    // Estadisticas
+    imprimirTitulo("R E S U M E N   F I N A L", 14, 9);
+    
+    sprintf(mensaje, "Monedas recolectadas: %d / %d", p1.totalMonedas, maxMonedasTotales);
+    imprimirTitulo(mensaje, 14, 14); // Texto y marco amarillo
+    sprintf(mensaje, "Pasos totales: %d", p1.totalMovs);
+    imprimirTitulo(mensaje, 10, 10); // Texto y marco verde
+    sprintf(mensaje, "Niveles completados: %d", nivelesTotales);
+    imprimirTitulo(mensaje, 11, 11); // Texto y marco celeste
+    sprintf(mensaje, "PUNTAJE FINAL: %d", p1.puntajeTot);
+    imprimirTitulo(mensaje, 12, 12); // Texto y marco rojo brillante para resaltar
     printf("\n\n");
     cambiarColor(8); // Gris oscuro
     printf("                       Presiona cualquier tecla para continuar...\n");
     cambiarColor(7);
     
-    // Limpiamos el buffer
+    // Limpiamos el buffer del teclado por si el jugador presionó algo extra
     while(_kbhit()) _getch(); 
     _getch();
 }

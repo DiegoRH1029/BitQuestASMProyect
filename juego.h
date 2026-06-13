@@ -19,7 +19,7 @@ int calcularPuntaje(int numMonedas, int numPasos);
 extern char mapa[FILAS][COLUMNAS];
 //Estructuras
 //struct jugador, es para guardar la fila y columna actual del jugador
-typedef struct{
+typedef struct {
     char* nombre;
     int fila;
     int col;
@@ -27,7 +27,14 @@ typedef struct{
     int llaves;
     int movs;
     int puntajeTot;
-} Jugador;
+    int totalMovs;
+    int totalMonedas;
+}Jugador;
+typedef struct {
+    Jugador jugador;
+    int maxMonedasNivel; // Extraemos el total de monedas del nivel
+    int estado;          // 1 si continuo, -1 si salio o perdio
+} ResultadoNivel;
 typedef struct{
     int numNivel;
     int totalMonedas;
@@ -51,8 +58,9 @@ void imprimirMenu();
 void imprimirTitulo(const char* titulo, int colorTitulo,int colorBorde);
 
 //Funciones de flujo de juego
-int jugando(char* nombreJugador,int nivelActual);
+ResultadoNivel jugando(Jugador p1, int nivelActual);
 int imprimirInfo(Jugador p1,Mapa mapaInfo,int completado);
 void actualizarRanking(char *nombreJugador,int puntaje);
-void imprimirVictoria(char* nombreJugador,int puntaje);
+void imprimirVictoria(Jugador p1, int maxMonedasTotales, int nivelesTotales);
+
 #endif
