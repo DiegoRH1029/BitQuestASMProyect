@@ -14,6 +14,7 @@ int validarMov(char *mapa, int numColumnas, int fila, int columna);
 int detectarObj(char *mapa, int columnas, int fila, int columna, char aBuscar); 
 int contCeldasLibres(char *mapa, int totCeldas);
 int posCaracter(char *mapa, int totCeldas,char c);
+int calcularPuntaje(int numMonedas, int numPasos);
 //Mapa de prueba
 extern char mapa[FILAS][COLUMNAS];
 //Estructuras
@@ -50,5 +51,5 @@ void imprimirTitulo(const char* titulo, int colorTitulo,int colorBorde);
 
 //Funciones de flujo de juego
 int jugando(char* nombreJugador,char* nivel,int nivelActual);
-int imprimirInfo(Jugador p1,Mapa mapaInfo);
+int imprimirInfo(Jugador p1,Mapa mapaInfo,int completado);
 #endif

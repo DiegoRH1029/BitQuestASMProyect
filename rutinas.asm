@@ -2,7 +2,7 @@
  default rel
  global contarChar
  global validarMov
- ;global calcularPuntaje pendiente
+ global calcularPuntaje
  global detectarObj 
  global contCeldasLibres
  ;funcion que devolvera la posicion de un caracter (primera coincidencia)
@@ -96,6 +96,18 @@ contCeldasLibres:
 
     .fin:  
     ret
+;int calcularPuntaje(int numMonedas, int numPasos)
+    ;                     ecx              edx
+;Nuestra formula cera (puntaje = (monedas*100)-pasos)
+calcularPuntaje:
+    mov eax, ecx ;pasamos las monedas a eax
+    imul eax,100 ;las multiplicamos por 100
+    sub eax,edx ;les restamos los pasos
+    cmp eax,0 ;verificamos que sea mayor a 0
+    jge .fin
+    xor eax,eax ;sino devolvera 0
+    .fin:
+    ret 
 
 ;int posCaracter(char *mapa, int totCeldas, char c)
                 ;  rcx          rdx         r8

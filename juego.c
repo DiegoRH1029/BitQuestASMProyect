@@ -12,6 +12,7 @@ int jugando(char* nombreJugador,char* nivel,int nivelActual){
     Mapa mapaInfo;
     mapaInfo.numNivel=nivelActual;
     int juego=1;
+    int completado=0;
     int direccion=1;
     if(cargarNivel("niveles.txt",nivel)!=1){
         return 0;
@@ -64,7 +65,7 @@ int jugando(char* nombreJugador,char* nivel,int nivelActual){
                         puedeAvanzar=1;
                         break;
                     case 'E'://El objeto es la salida
-                        if(p1.llaves>0) {juego=0; puedeAvanzar=1;}
+                        if(p1.llaves>0) {juego=3; puedeAvanzar=1; completado=1;}
                         if(p1.llaves!=0)p1.llaves--;
                         break;
                     case 'M'://El objeto es una moneda
@@ -97,30 +98,50 @@ int jugando(char* nombreJugador,char* nivel,int nivelActual){
     }
     system("cls");
     imprimirMapaDiseno(&mapa[0][0],cam.fila,cam.col,direccion);
-    return imprimirInfo(p1,mapaInfo);
+    return imprimirInfo(p1,mapaInfo,completado);
 }
 
 //Funcion que imprimira la informacion del nivel completado
-int imprimirInfo(Jugador p1,Mapa mapaInfo){
+int imprimirInfo(Jugador p1,Mapa mapaInfo,int completado){
     char mensaje[50];
-    imprimirTitulo("F E L I C I D A D E S",10,9);
-    sprintf(mensaje,"Nivel -%d- completado",mapaInfo.numNivel);
-    imprimirTitulo(mensaje,10,9);
-    printf("\n");
-    imprimirTitulo("E S T A D I S T I C A S",10,9);
-    sprintf(mensaje,"Llaves sobrantes: %d",p1.llaves);
-    imprimirTitulo(mensaje,10,9);
-    sprintf(mensaje,"Monedas: %d / %d",p1.monedas,mapaInfo.totalMonedas);
-    imprimirTitulo(mensaje,10,9);
-    sprintf(mensaje,"Total movimientos: %d",p1.movs);
-    imprimirTitulo(mensaje,10,9);
-    printf("Desea continuar? (y/n): ");
-    char resp;
-    do{
-        resp=toupper(_getch());
-    }while(resp!='Y'&&resp!='N');
-if(resp=='Y'){system("cls"); return 1;}
-else{system("cls"); return 0;}
+    if(completado){
+        imprimirTitulo("F E L I C I D A D E S",10,9);
+        sprintf(mensaje,"Nivel -%d- completado",mapaInfo.numNivel);
+        imprimirTitulo(mensaje,10,9);
+        printf("\n");
+        imprimirTitulo("E S T A D I S T I C A S",10,9);
+        sprintf(mensaje,"Llaves sobrantes: %d",p1.llaves);
+        imprimirTitulo(mensaje,10,9);
+        sprintf(mensaje,"Monedas: %d / %d",p1.monedas,mapaInfo.totalMonedas);
+        imprimirTitulo(mensaje,10,9);
+        sprintf(mensaje,"Total movimientos: %d",p1.movs);
+        imprimirTitulo(mensaje,10,9);
+        sprintf(mensaje,"Puntaje: %d",calcularPuntaje(p1.monedas,p1.movs));
+        imprimirTitulo(mensaje,10,9);
+        printf("Desea continuar? (y/n): ");
+        char resp;
+        do{
+            resp=toupper(_getch());
+        }while(resp!='Y'&&resp!='N');
+        if(resp=='Y'){system("cls"); return 1;}
+        else{system("cls"); return 0;}   
+    }
+    else{
+        imprimirTitulo("SUERTE PARA LA PROXIMA",10,9);
+        sprintf(mensaje,"Nivel -%d- no completado",mapaInfo.numNivel);
+        imprimirTitulo(mensaje,10,9);
+        printf("\n");
+        imprimirTitulo("E S T A D I S T I C A S",10,9);
+        sprintf(mensaje,"Llaves sobrantes: %d",p1.llaves);
+        imprimirTitulo(mensaje,10,9);
+        sprintf(mensaje,"Monedas: %d / %d",p1.monedas,mapaInfo.totalMonedas);
+        imprimirTitulo(mensaje,10,9);
+        sprintf(mensaje,"Total movimientos: %d",p1.movs);
+        imprimirTitulo(mensaje,10,9);
+        sprintf(mensaje,"Puntaje: N/A");
+        imprimirTitulo(mensaje,10,9);
+        system("pause");
+    }
 }
 //Funcion que retorna la nueva estrucura de camara;
 void cambiarColor(int color) {
@@ -241,7 +262,7 @@ void imprimirHUD(int nivel, int monedas, int llaves, int totLlaves, int totMoned
     //Titulo centrado
     printf("%c", 186); 
     cambiarColor(15);  
-    printf("         BITQUEST - NIVEL %-2d           ", nivel); 
+    printf("         BITQUEST - NIVEL %d           ", nivel); 
     cambiarColor(9); 
     printf("%c\n", 186); 
 

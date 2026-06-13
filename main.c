@@ -65,12 +65,10 @@ int main(){
                 } else {
                     // Arrancamos tu funcion jugando de juego.c
                     // Le pasamos el nombre, el string del archivo txt y el entero para el HUD
-                    if(jugando(nombreJugador, "--nivel 1", 1)==0) salir=1;  
-                    else if(jugando(nombreJugador, "--nivel 2", 1)==0) salir=1; 
-                    else if(jugando(nombreJugador, "--nivel 3", 1)==0) salir=1;
+                    if(jugando(nombreJugador, "--nivel 1", 1)==0)break;  
+                    else if(jugando(nombreJugador, "--nivel 2", 2)==0)break; 
+                    else if(jugando(nombreJugador, "--nivel 3", 3)==0)break;
                 }
-                break;
-
             case 'R': //Para ver los rankigs
                 system("cls");
                 cambiarColor(14);
