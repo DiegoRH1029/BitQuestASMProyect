@@ -2,8 +2,9 @@
 #include <windows.h>
 #include <conio.h>
 #include <stdlib.h>
-#define FILAS 20
-#define COLUMNAS 20
+#include <string.h>
+#define FILAS 60
+#define COLUMNAS 60
 //Declaracion de funciones ensamblador
 int contarChar(char *mapa, int totCeldas, char aBuscar);
 int validarMov(char *mapa, int numColumnas, int fila, int columna);
@@ -11,28 +12,7 @@ int detectarObj(char *mapa, int columnas, int fila, int columna, char aBuscar);
 int contCeldasLibres(char *mapa, int totCeldas);
 int posCaracter(char *mapa, int totCeldas,char c);
 //Mapa de prueba
-char mapa[FILAS][COLUMNAS] = {
-    {'#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#'},
-    {'#','P','.','.','.','.','.','.','#','.','.','.','.','.','.','.','.','.','.','#'},
-    {'#','#','#','.','#','#','#','#','.','#','.','#','#','#','#','#','#','#','.','#'},
-    {'#','.','.','.','.','.','#','.','#','.','#','M','.','.','.','.','.','.','.','#'},
-    {'#','.','#','#','#','#','.','#','.','#','.','#','.','#','#','#','#','#','.','#'},
-    {'#','.','#','M','.','#','.','#','.','.','.','#','.','.','.','.','.','#','.','#'},
-    {'#','.','#','.','#','#','.','#','#','#','#','#','.','#','#','#','.','#','.','#'},
-    {'#','.','#','.','.','.','.','.','.','.','.','#','.','#','.','.','.','#','.','#'},
-    {'#','.','#','#','#','#','#','#','#','#','.','#','.','#','.','#','#','#','.','#'},
-    {'#','.','.','.','.','.','.','.','#','.','.','.','#','.','#','M','#','.','.','#'},
-    {'#','#','#','#','.','#','#','#','.','#','#','#','#','#','.','#','.','#','.','#'},
-    {'#','M','.','.','.','#','.','.','.','.','.','.','.','.','.','#','.','#','.','#'},
-    {'#','#','#','#','#','#','.','#','#','#','#','#','#','#','#','#','.','#','.','#'},
-    {'#','.','.','.','.','.','.','.','.','.','.','#','K','.','.','.','.','#','.','#'},
-    {'#','.','#','#','#','#','#','#','#','#','.','#','#','#','#','#','#','#','.','#'},
-    {'#','.','#','.','.','.','.','.','#','.','#','.','.','.','.','.','.','.','.','#'},
-    {'#','.','#','.','#','#','#','#','.','#','.','#','.','#','#','#','#','#','.','#'},
-    {'#','.','#','.','#','M','.','.','.','#','D','#','.','.','.','.','.','#','.','#'},
-    {'#','.','#','.','#','#','#','#','#','#','.','#','#','#','#','#','.','#','E','#'},
-    {'#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#','#'}
-};
+char mapa[FILAS][COLUMNAS];
 //Estructuras
 typedef struct{
     int fila;
@@ -43,6 +23,7 @@ typedef struct{
 void cambiarColor(int color);
 void imprimirMapaDiseno(char *mapaPtr, int filas, int columnas);
 void moverCursor00();
+int cargarNivel(const char* nombreArchivo, const char* nivelABuscar);
 
 int main(){
     /*
@@ -64,6 +45,9 @@ int main(){
     printf("\n=== BITQUEST - NIVEL DE PRUEBA ===\n\n");
     Jugador p1;
     int jugando=1;
+    if(cargarNivel("niveles.txt","--nivel 1")!=1){
+        return 0;
+    }
     //obtenemos la posisicion inicial del jugador desde el mapa 
     int indJugador = posCaracter(&mapa[0][0],FILAS*COLUMNAS,'P');
     if(indJugador!=-1){
@@ -77,22 +61,26 @@ int main(){
     while(jugando){
         moverCursor00();
         imprimirMapaDiseno(&mapa[0][0], FILAS, COLUMNAS);
-        char tecla = _getch();
-        int nuevaFila = p1.fila;
-        int nuevaCol = p1.col;
-        if(tecla=='w'||tecla=='W') nuevaFila--;
-        else if(tecla=='s'||tecla=='S') nuevaFila++;
-        else if(tecla=='a'||tecla=='A') nuevaCol--;
-        else if(tecla=='d'||tecla=='D') nuevaCol++;
-        else if(tecla=='q'||tecla=='Q') break;
-        int movimientoValido=validarMov(&mapa[0][0],COLUMNAS,nuevaFila,nuevaCol);
-        if(movimientoValido==1){
-            mapa[p1.fila][p1.col] = '.';
-            p1.fila=nuevaFila;
-            p1.col=nuevaCol;
-            mapa[p1.fila][p1.col]='P';
+        if(_kbhit()){ //Detecta si una tecla se preciono
+            char tecla = _getch();//guardamos tecla 
+            int nuevaFila = p1.fila;//fila
+            int nuevaCol = p1.col;//comulmans
+            //Validamos que tecla se preciono, dependiendo se mueve en cierta posicion
+            if(tecla=='w'||tecla=='W') nuevaFila--;
+            else if(tecla=='s'||tecla=='S') nuevaFila++;
+            else if(tecla=='a'||tecla=='A') nuevaCol--;
+            else if(tecla=='d'||tecla=='D') nuevaCol++;
+            else if(tecla=='q'||tecla=='Q') break;
+            //Llamamos si el movimiento es valido
+            int movimientoValido=validarMov(&mapa[0][0],COLUMNAS,nuevaFila,nuevaCol);
+            if(movimientoValido==1){//Si es valido vamos al siguiente movimiento
+                mapa[p1.fila][p1.col] = '.';
+                p1.fila=nuevaFila;
+                p1.col=nuevaCol;
+                mapa[p1.fila][p1.col]='P';
+            }
         }
-
+        Sleep(50);
     }
     system("pause");
     return 0;
@@ -160,4 +148,52 @@ void moverCursor00(){
     HANDLE hconsole = GetStdHandle(STD_OUTPUT_HANDLE);
     COORD pos = {0,0};
     SetConsoleCursorPosition(hconsole,pos);
+}
+
+//Funcion que se encargara de cargar un nivel desde el archivo niveles.txt
+//recibe el nombre del archivo y el nivel a bscar (--nivel 1, --nivel 2 etc)
+int cargarNivel(const char* nombreArchivo, const char* nivelABuscar){
+    FILE *archivo = fopen(nombreArchivo,"r");
+    if(archivo==NULL){
+        printf("Archivo no encontrado o no valido");
+        return 0;
+    }
+    char buffer[100]; //Buffer para guardar una linea completa del archivo
+    int nivelEncontrado=0;
+    //Validamos primeramente en que linea esta nuestra etiqueta del nivel 
+    while(fgets(buffer,sizeof(buffer),archivo)!=NULL){
+        if(strstr(buffer,nivelABuscar)!=NULL){
+            nivelEncontrado=1;
+            break;
+        }
+    }
+    if(!nivelEncontrado){
+        printf("Nivel encontrado");
+        fclose(archivo);
+        return 0;
+    }
+    //leemos las 60 filas y las metemos en la matriz
+    for(int i=0; i<FILAS;i++){
+        if(fgets(buffer,sizeof(buffer),archivo)==NULL){
+            printf("Error faltan filas");
+            fclose(archivo);
+            return 0;
+        }
+        if(strstr(buffer,"--nivel ")!=NULL){
+            printf("Error :Mapa incompleto");
+            fclose(archivo);
+            return 0;
+        }
+        //Metemos caracter por caracter
+        for(int j=0;j<COLUMNAS;j++){
+            //Filtramos los saltos de linea o otros caracteres
+            if(buffer[j]=='\n'||buffer[j]=='\r'||buffer[j]=='\0'){
+                mapa[i][j] = '.'; 
+            }else{
+                mapa[i][j]=buffer[j];
+            }
+        }
+    }
+    fclose(archivo);
+    return 1;
 }
