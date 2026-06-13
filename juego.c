@@ -3,168 +3,101 @@
 #include <conio.h>
 #include <stdlib.h>
 #include <string.h>
-#define FILAS 60
-#define COLUMNAS 60
-//Declaracion de funciones ensamblador
-int contarChar(char *mapa, int totCeldas, char aBuscar);
-int validarMov(char *mapa, int numColumnas, int fila, int columna);
-int detectarObj(char *mapa, int columnas, int fila, int columna, char aBuscar); 
-int contCeldasLibres(char *mapa, int totCeldas);
-int posCaracter(char *mapa, int totCeldas,char c);
-//Mapa de prueba
+#include "juego.h"
+
+//Matriz de nuestro mapa
 char mapa[FILAS][COLUMNAS];
-//Estructuras
-//struct jugador, es para guardar la fila y columna actual del jugador
-typedef struct{
-    int fila;
-    int col;
-} Jugador;
-//Estructura de la camara, para guardar indices de donde se imprimira la camara
-typedef struct{
-    int fila;
-    int col;
-}Camara;
-
-//Funciones c
-void cambiarColor(int color);
-void imprimirMapaDiseno(char *mapaPtr,int camFila,int camCol);
-void moverCursor00();
-int cargarNivel(const char* nombreArchivo, const char* nivelABuscar);
-
-int main(){
-    /*
-    //Proband si funciona funcion contar caracteres
-    int totalMonedas = contarChar(&mapa[0][0], FILAS*COLUMNAS, 'M');   
-    printf("Total monedas : %d\n",totalMonedas);
-    printf("Total paredes: %d\n",contarChar(&mapa[0][0], FILAS*COLUMNAS, '#'));
-    printf("Total Caminos: %d\n",contarChar(&mapa[0][0], FILAS*COLUMNAS, '.'));
-    //Probando si funciona funcion validar movimiento
-    printf("movimiento posible : %d %c\n", validarMov(&mapa[0][0],COLUMNAS,1,3),mapa[1][3]);
-    printf("movimiento posible : %d %c\n", validarMov(&mapa[0][0],COLUMNAS,0,0),mapa[0][0]);
-    //Probando funcion validar objeto en casilla 
-    printf("El objeto a buscar . es:%d %c\n",detectarObj(&mapa[0][0],COLUMNAS,1,3,'.'),mapa[1][3]);
-    printf("El objeto a buscar # es:%d %c\n",detectarObj(&mapa[0][0],COLUMNAS,0,0,'#'),mapa[0][0]);
-    printf("Numero celdas libres: %d",contCeldasLibres(&mapa[0][0],FILAS*COLUMNAS));
-    // esto configura la consola para los caracteres extendidos
-    */
-    system("chcp 437 > nul"); 
-    printf("\n=== BITQUEST - NIVEL DE PRUEBA ===\n\n");
-    Jugador p1;
-    Camara cam;
-    int jugando=1;
-    if(cargarNivel("niveles.txt","--nivel 2")!=1){
-        return 0;
-    }
-    //obtenemos la posisicion inicial del jugador desde el mapa 
-    int indJugador = posCaracter(&mapa[0][0],FILAS*COLUMNAS,'P');
-    if(indJugador!=-1){
-        p1.fila = indJugador/COLUMNAS;
-        p1.col = indJugador%COLUMNAS;
-    }else{ 
-        printf ("\nEl jugador no existe");
-        return 1;
-    } 
-    //Centramos la camara respecto al jugador
-    cam.fila = p1.fila-10;
-    cam.col = p1.col -10;
-
-    // mandamos llamar la funcion con el diseño 
-    while(jugando){
-        moverCursor00();
-        //Si el jugador se acerca a menos de 5 bloques del borde se empuja la camara
-        if(p1.fila<cam.fila+5) cam.fila = p1.fila-5;
-        if(p1.fila>cam.fila+15) cam.fila=p1.fila-15;
-        if(p1.col<cam.col+5) cam.col = p1.col-5;
-        if(p1.col>cam.col+15) cam.col=p1.col-15;
-        //Nos aseguramos que la camara no este en un limite del mapa invalido (60-20)
-        if(cam.fila<0)cam.fila=0;
-        if(cam.fila>FILAS-20)cam.fila=FILAS-20;
-        if(cam.col<0)cam.col=0;
-        if(cam.col>COLUMNAS-20)cam.col=COLUMNAS-20;
-
-        imprimirMapaDiseno(&mapa[0][0],cam.fila,cam.col);
-        if(_kbhit()){ //Detecta si una tecla se preciono
-            char tecla = _getch();//guardamos tecla 
-            int nuevaFila = p1.fila;//fila
-            int nuevaCol = p1.col;//comulmans
-            //Validamos que tecla se preciono, dependiendo se mueve en cierta posicion
-            if(tecla=='w'||tecla=='W') nuevaFila--;
-            else if(tecla=='s'||tecla=='S') nuevaFila++;
-            else if(tecla=='a'||tecla=='A') nuevaCol--;
-            else if(tecla=='d'||tecla=='D') nuevaCol++;
-            else if(tecla=='q'||tecla=='Q') break;
-            //Llamamos si el movimiento es valido
-            int movimientoValido=validarMov(&mapa[0][0],COLUMNAS,nuevaFila,nuevaCol);
-            if(movimientoValido==1){//Si es valido vamos al siguiente movimiento
-                mapa[p1.fila][p1.col] = '.';
-                p1.fila=nuevaFila;
-                p1.col=nuevaCol;
-                mapa[p1.fila][p1.col]='P';
-            }
-        }
-        Sleep(25);
-    }
-    system("pause");
-    return 0;
-}
+//Funcion que retorna la nueva estrucura de camara;
 void cambiarColor(int color) {
     HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
     SetConsoleTextAttribute(hConsole, color);
 }
-
+struct Camara nuevaCamara(struct Camara camActual,int fila, int col){
+        if(fila<camActual.fila+5) camActual.fila = fila-5;
+        if(fila>camActual.fila+15) camActual.fila=fila-15;
+        if(col<camActual.col+5) camActual.col = col-5;
+        if(col>camActual.col+15) camActual.col=col-15;
+        //Nos aseguramos que la camara no este en un limite del mapa invalido (60-20)
+        if(camActual.fila<0)camActual.fila=0;
+        if(camActual.fila>FILAS-20)camActual.fila=FILAS-20;
+        if(camActual.col<0)camActual.col=0;
+        if(camActual.col>COLUMNAS-20)camActual.col=COLUMNAS-20;
+    return camActual;
+}
 //Esta funcion ahora solo imprimira 20*20 de la matriz, recibe el indice de la camara fila y columna
-void imprimirMapaDiseno(char *mapaPtr,int camFila, int camCol) {
-    for (int i = camFila;i<camFila+20;i++) {
-        for (int j=camCol ;j<camCol+20; j++) {
-            // sacamos el caracter de la matriz usando el indice 1D
+// Ahora recibe la direccion del jugador (0=Abajo, 1=Arriba, 2=Izq, 3=Der)
+void imprimirMapaDiseno(char *mapaPtr, int camFila, int camCol, int dirJugador) {
+    cambiarColor(9); 
+    
+    // 1. Techo: 20 bloques * 6 de ancho = 120 caracteres de largo
+    printf("%c", 201); 
+    for(int i=0; i<120; i++) printf("%c", 205); 
+    printf("%c\n", 187); 
+
+    // 2. Mapa
+    for (int i = camFila; i < camFila + 20; i++) {
+        cambiarColor(9);
+        printf("%c", 186); // Pared izquierda del marco
+        
+        for (int j=camCol; j<camCol+20; j++) {
             char caracter = *(mapaPtr+(i*COLUMNAS)+j);
-                switch (caracter) {
-                case '#': // PARED: Pintando el fondo
-                    cambiarColor(128); // 128 es el fondo gris oscuro
-                    printf("  "); // 
+            
+            switch (caracter) {
+                case '#': //PAREDES: 6 bloques solidos pegados
+                    cambiarColor(8); 
+                    printf("%c%c%c%c%c%c", 219, 219, 219, 219, 219, 219); 
                     break;
                     
-                case '.': // CAMINO: Totalmente vacio
+                case '.': // CAMINO: 6 espacios vacios
                     cambiarColor(7);
-                    printf("  "); 
+                    printf("      "); 
                     break;
                     
-                case 'P': // JUGADOR
+                case 'P': // JUGADOR 
                     cambiarColor(10); 
-                    printf("P "); 
+                    if (dirJugador == 0) printf("( ._.)"); // Abajo
+                    else if (dirJugador == 1) printf("( '-')"); // Arriba 
+                    else if (dirJugador == 2) printf("('_' )"); // Izquierda
+                    else if (dirJugador == 3) printf("( '_')"); // Derecha
                     break;
                     
                 case 'M': // MONEDA
                     cambiarColor(14); 
-                    printf("O "); 
+                    // Para que parezca mas solida, usamos el caracter 254 (un cuadro centrado)
+                    printf("  %c   ", 254); 
                     break;
                     
                 case 'K': // LLAVE
                     cambiarColor(11); 
-                    printf("K "); 
+                    printf(" O->  "); 
                     break;
                     
-                case 'D': // PUERTA: Dos barras verticales
+                case 'D': // PUERTA
                     cambiarColor(12); 
-                    printf("||"); 
+                    printf(" |||| "); 
                     break;
                     
                 case 'E': // SALIDA
                     cambiarColor(13); 
-                    printf(">>"); 
+                    printf("  >>  "); 
                     break;
                     
                 default: 
                     cambiarColor(7);
-                    printf("%c ", caracter);
+                    printf("  %c   ", caracter);
                     break;
             }
         }
-        // salto de linea al terminar la fila
-        printf("\n");
+        cambiarColor(9); 
+        printf("%c\n", 186); // Pared derecha del marco
     }
     
-    // regresamos al color blanco de siempre para no buguear la consola
+    // 3. Piso de la ventana
+    cambiarColor(9);
+    printf("%c", 200); 
+    for(int i = 0; i < 120; i++) printf("%c", 205); 
+    printf("%c\n", 188); 
+    
     cambiarColor(7);
 }
 void moverCursor00(){
@@ -172,7 +105,54 @@ void moverCursor00(){
     COORD pos = {0,0};
     SetConsoleCursorPosition(hconsole,pos);
 }
+//Funcion que se encarga de imprimir la HUD (total llaves, nivel actual etc)
+void imprimirHUD(int nivel, int monedas, int llaves, int totLlaves, int totMonedas) {
+    cambiarColor(9); // Azul para el marco
 
+    //Techo (39 de ancho)
+    printf("%c", 201); 
+    for(int i=0; i<39; i++) printf("%c", 205); 
+    printf("%c\n", 187); 
+
+    //Titulo centrado
+    printf("%c", 186); 
+    cambiarColor(15);  
+    printf("         BITQUEST - NIVEL %-2d           ", nivel); 
+    cambiarColor(9); 
+    printf("%c\n", 186); 
+
+    //Divisor (19 izquierda, 1 centro, 19 derecha)
+    printf("%c", 204); 
+    for(int i=0; i<19; i++) printf("%c", 205); 
+    printf("%c", 203); 
+    for(int i=0; i<19; i++) printf("%c", 205);
+    printf("%c\n", 185); 
+
+    //Estadisticas con los parametros
+    printf("%c", 186); // Pared izq
+    
+    cambiarColor(14); // Amarillo
+    // El %2d alinea los numeros a la derecha y %-2d a la izq, asi no se mueve el texto
+    printf(" Monedas (O): %2d/%-2d", monedas, totMonedas); 
+    
+    cambiarColor(9);// Regresamos al marco
+    printf("%c", 186);// Pared central
+    
+    cambiarColor(11); // Celeste
+    printf(" Llaves (K): %2d/%-2d ", llaves, totLlaves); 
+    
+    cambiarColor(9); 
+    printf("%c\n", 186); // Pared der
+
+    //Piso
+    printf("%c", 200); 
+    for(int i=0; i<19; i++) printf("%c", 205);
+    printf("%c", 202); 
+    for(int i=0; i<19; i++) printf("%c", 205);
+    printf("%c\n", 188); 
+
+    cambiarColor(7); // Color normal
+}
 //Funcion que se encargara de cargar un nivel desde el archivo niveles.txt
 //recibe el nombre del archivo y el nivel a bscar (--nivel 1, --nivel 2 etc)
 int cargarNivel(const char* nombreArchivo, const char* nivelABuscar){

@@ -5,4 +5,4 @@ echo compilar compilar
 gcc main.c juego.c rutinas.obj -o BitQuest.exe
 
 echo Ejecutando..
-start BitQuest.exe
+start /MAX BitQuest.exe

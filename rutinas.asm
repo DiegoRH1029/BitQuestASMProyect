@@ -12,13 +12,13 @@
 
 ;Funcion que devuelve cuantos caracteres de ese tipo contiene la matriz
 ;int contarCaracteres(char *mapa, int totCeldas, char aBuscar)
-;                        rcx          rdx           r8b
- contarChar:
+;                        rcx          edx           r8b
+contarChar:
     xor rax,rax ;Este sera el contador
-    xor r9,r9 ;Este sera i
+    xor r9d,r9d ;Este sera i
     
     .ciclo: ;for(int i=0; i<totCeldas; i++)
-    cmp r9,rdx
+    cmp r9d,edx
     jge .fin 
 
     mov r10b, byte [rcx+r9] ;r10b = mapa[i]
