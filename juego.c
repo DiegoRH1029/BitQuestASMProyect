@@ -14,14 +14,20 @@ int posCaracter(char *mapa, int totCeldas,char c);
 //Mapa de prueba
 char mapa[FILAS][COLUMNAS];
 //Estructuras
+//struct jugador, es para guardar la fila y columna actual del jugador
 typedef struct{
     int fila;
     int col;
 } Jugador;
+//Estructura de la camara, para guardar indices de donde se imprimira la camara
+typedef struct{
+    int fila;
+    int col;
+}Camara;
 
 //Funciones c
 void cambiarColor(int color);
-void imprimirMapaDiseno(char *mapaPtr, int filas, int columnas);
+void imprimirMapaDiseno(char *mapaPtr,int camFila,int camCol);
 void moverCursor00();
 int cargarNivel(const char* nombreArchivo, const char* nivelABuscar);
 
@@ -44,8 +50,9 @@ int main(){
     system("chcp 437 > nul"); 
     printf("\n=== BITQUEST - NIVEL DE PRUEBA ===\n\n");
     Jugador p1;
+    Camara cam;
     int jugando=1;
-    if(cargarNivel("niveles.txt","--nivel 1")!=1){
+    if(cargarNivel("niveles.txt","--nivel 2")!=1){
         return 0;
     }
     //obtenemos la posisicion inicial del jugador desde el mapa 
@@ -57,10 +64,25 @@ int main(){
         printf ("\nEl jugador no existe");
         return 1;
     } 
+    //Centramos la camara respecto al jugador
+    cam.fila = p1.fila-10;
+    cam.col = p1.col -10;
+
     // mandamos llamar la funcion con el diseño 
     while(jugando){
         moverCursor00();
-        imprimirMapaDiseno(&mapa[0][0], FILAS, COLUMNAS);
+        //Si el jugador se acerca a menos de 5 bloques del borde se empuja la camara
+        if(p1.fila<cam.fila+5) cam.fila = p1.fila-5;
+        if(p1.fila>cam.fila+15) cam.fila=p1.fila-15;
+        if(p1.col<cam.col+5) cam.col = p1.col-5;
+        if(p1.col>cam.col+15) cam.col=p1.col-15;
+        //Nos aseguramos que la camara no este en un limite del mapa invalido (60-20)
+        if(cam.fila<0)cam.fila=0;
+        if(cam.fila>FILAS-20)cam.fila=FILAS-20;
+        if(cam.col<0)cam.col=0;
+        if(cam.col>COLUMNAS-20)cam.col=COLUMNAS-20;
+
+        imprimirMapaDiseno(&mapa[0][0],cam.fila,cam.col);
         if(_kbhit()){ //Detecta si una tecla se preciono
             char tecla = _getch();//guardamos tecla 
             int nuevaFila = p1.fila;//fila
@@ -80,7 +102,7 @@ int main(){
                 mapa[p1.fila][p1.col]='P';
             }
         }
-        Sleep(50);
+        Sleep(25);
     }
     system("pause");
     return 0;
@@ -90,11 +112,12 @@ void cambiarColor(int color) {
     SetConsoleTextAttribute(hConsole, color);
 }
 
-void imprimirMapaDiseno(char *mapaPtr, int filas, int columnas) {
-    for (int i = 0;i<filas;i++) {
-        for (int j = 0;j<columnas; j++) {
+//Esta funcion ahora solo imprimira 20*20 de la matriz, recibe el indice de la camara fila y columna
+void imprimirMapaDiseno(char *mapaPtr,int camFila, int camCol) {
+    for (int i = camFila;i<camFila+20;i++) {
+        for (int j=camCol ;j<camCol+20; j++) {
             // sacamos el caracter de la matriz usando el indice 1D
-            char caracter = *(mapaPtr+(i*columnas)+j);
+            char caracter = *(mapaPtr+(i*COLUMNAS)+j);
                 switch (caracter) {
                 case '#': // PARED: Pintando el fondo
                     cambiarColor(128); // 128 es el fondo gris oscuro
