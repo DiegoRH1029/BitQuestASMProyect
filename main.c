@@ -78,6 +78,8 @@ int main(){
                     p1.movs = 0;
                     p1.totalMovs = 0; // Inicializamos total movimientos
                     p1.puntajeTot = 0;
+                    p1.vidas = 3; //Le damos 3 vidas al iniciar la partida
+                    p1.armas = 0; //Inicia sin armas
                     
                     while(jugandoNiveles){
                         char nombreNivel[20];

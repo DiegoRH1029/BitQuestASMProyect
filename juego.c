@@ -13,7 +13,7 @@ ResultadoNivel jugando(Jugador p1, int nivelActual){
     int juego=1;
     int completado=0;
     int direccion=1;
-    
+    int ticks=0;
     //obtenemos la posisicion inicial del jugador desde el mapa 
     int indJugador = posCaracter(&mapa[0][0],FILAS*COLUMNAS,'P');
     if(indJugador!=-1){
@@ -35,11 +35,11 @@ ResultadoNivel jugando(Jugador p1, int nivelActual){
     //Centramos la camara respecto al jugador
     cam.fila = p1.fila-10;
     cam.col = p1.col -10;
-        
+    
     while(juego){
         moverCursor00();
         cam = nuevaCamara(cam,p1.fila,p1.col);
-        imprimirHUD(nivelActual,p1.monedas,p1.llaves,mapaInfo.totalLlaves,mapaInfo.totalMonedas);
+        imprimirHUD(nivelActual,p1.monedas,p1.llaves,mapaInfo.totalMonedas);
         imprimirMapaDiseno(&mapa[0][0],cam.fila,cam.col,direccion);
         
         if(_kbhit()){ //Detecta si una tecla se preciono
@@ -64,6 +64,8 @@ ResultadoNivel jugando(Jugador p1, int nivelActual){
                 if(detectarObj(&mapa[0][0],COLUMNAS,nuevaFila,nuevaCol,'M')) objeto ='M';
                 if(detectarObj(&mapa[0][0],COLUMNAS,nuevaFila,nuevaCol,'K')) objeto ='K';
                 if(detectarObj(&mapa[0][0],COLUMNAS,nuevaFila,nuevaCol,'D')) objeto ='D';
+                if(detectarObj(&mapa[0][0],COLUMNAS,nuevaFila,nuevaCol,'A')) objeto ='A';
+                if(detectarObj(&mapa[0][0],COLUMNAS,nuevaFila,nuevaCol,'X')) objeto ='X';
 
                 if(objeto!='0'){
                     switch (objeto){
@@ -85,7 +87,27 @@ ResultadoNivel jugando(Jugador p1, int nivelActual){
                         break;
                     case 'D'://El objeto es una puerta
                         puedeAvanzar = (p1.llaves>0);
-                        if(p1.llaves!=0)p1.llaves--;
+                        break;
+                    case 'A'://El objeto es un Arma
+                        puedeAvanzar=1;
+                        p1.armas++;
+                        break;
+                    case 'X'://El objeto es un Enemigo
+                        if(p1.armas>0){
+                            // Tiene arma: Mata al enemigo y avanza
+                            p1.armas--;
+                            puedeAvanzar = 1; 
+                        }else{
+                            // No tiene arma: Pierde vida y rebota (no avanza)
+                            p1.vidas--;
+                            puedeAvanzar = 0; 
+                            
+                            // Si se queda sin vidas, Game Over
+                            if(p1.vidas <= 0){
+                                juego = 0;
+                                completado = 0;
+                            }
+                        }
                         break;
                     default:
                         break;
@@ -99,6 +121,16 @@ ResultadoNivel jugando(Jugador p1, int nivelActual){
                     p1.movs++;
                 }
 
+            }
+        }
+        ticks++;
+        if(ticks >= 5) { // Cada 15 ciclos mueve los enemigos
+            moverEnemigos(&mapa[0][0],&p1);
+            ticks = 0;
+            // Validamos si un enemigo nos mato mientras estabamos quietos
+            if(p1.vidas<=0) {
+                juego = 0;
+                completado = 0;
             }
         }
         Sleep(25);
@@ -286,7 +318,16 @@ void imprimirMapaDiseno(char *mapaPtr, int camFila, int camCol, int dirJugador) 
                     
                 case 'E': // SALIDA
                     cambiarColor(13); 
-                    printf("  >>  "); 
+                    printf("|____|"); 
+                    break;
+                case 'X': // ENEMIGO
+                    cambiarColor(12); // Rojo
+                    printf("( >_<)"); 
+                    break;
+                    
+                case 'A': // ARMA 
+                    cambiarColor(13); // Magenta
+                    printf(" =|>  "); 
                     break;
                     
                 default: 
@@ -322,7 +363,7 @@ void imprimirMenu(){
     imprimirTitulo("[S] S a l i r",12,12);       
 }
 //Funcion que se encarga de imprimir la HUD (total llaves, nivel actual etc)
-void imprimirHUD(int nivel, int monedas, int llaves, int totLlaves, int totMonedas) {
+void imprimirHUD(int nivel, int monedas, int llaves, int totMonedas) {
     cambiarColor(9); // Azul para el marco
 
     //Techo (39 de ancho)
@@ -355,7 +396,7 @@ void imprimirHUD(int nivel, int monedas, int llaves, int totLlaves, int totMoned
     printf("%c", 186);// Pared central
     
     cambiarColor(11); // Celeste
-    printf(" Llaves (K): %2d/%-2d ", llaves, totLlaves); 
+    printf(" Llave: %s ", (llaves>0)? "Si":"No"); 
     
     cambiarColor(9); 
     printf("%c\n", 186); // Pared der
@@ -400,6 +441,63 @@ void imprimirTitulo(const char* titulo, int colorTitulo,int colorBorde) {
     printf("%c", 200); 
     for(int i=0;i<anchoCaja; i++)printf("%c", 205); 
     printf("%c\n", 188);
+}
+// Funcion que mueve todos los enemigos 
+void moverEnemigos(char *mapaPtr, Jugador *p1) {
+    // Movemos a los enemigos y los marcamos temporalmente con una 'x' minuscula
+    for(int i=0;i<FILAS; i++){
+        for(int j=0; j<COLUMNAS; j++){
+            
+            // Leemos la matriz usando NASM
+            if(leerChar(mapaPtr,COLUMNAS,i,j)=='X'){
+                
+                int dir = rand() % 4; // 0:arriba, 1:abajo, 2:izq, 3:der
+                int nuevaI=i,nuevaJ =j;
+                
+                if(dir==0) nuevaI--;
+                else if(dir==1) nuevaI++;
+                else if(dir==2) nuevaJ--;
+                else if(dir==3) nuevaJ++;
+
+                // Validamos que no se salga de los limites del mapa por seguridad
+                if(nuevaI>=0 && nuevaI<FILAS && nuevaJ>=0 && nuevaJ<COLUMNAS) {
+                    char destino = leerChar(mapaPtr, COLUMNAS, nuevaI, nuevaJ);
+                    if(destino=='.'){
+                        // Casilla libre, se mueve normal
+                        escribirChar(mapaPtr, COLUMNAS, i, j, '.');
+                        escribirChar(mapaPtr, COLUMNAS, nuevaI, nuevaJ, 'x'); 
+                        
+                    }else if(destino=='P'){
+                        //El enemigo intenta pisar al jugador
+                        if(p1->armas>0) {
+                            // El jugador se defiende en automatico
+                            p1->armas--; 
+                            escribirChar(mapaPtr, COLUMNAS,i,j,'.'); // El enemigo muere
+                        } else {
+                            // El jugador no tiene armas y recibe el golpe
+                            p1->vidas--; 
+                            escribirChar(mapaPtr, COLUMNAS,i,j,'x'); // El enemigo se queda donde estaba
+                        }
+                    } else {
+                        // Si es pared, llave u otro enemigo, se queda donde esta
+                        escribirChar(mapaPtr, COLUMNAS,i,j,'x'); 
+                    }
+                } else {
+                    // Si intentaba salir del mapa, se queda donde esta
+                    escribirChar(mapaPtr, COLUMNAS, i,j,'x'); 
+                }
+            }
+        }
+    }
+    
+    //Restauramos las 'x' a 'X' mayusculas para el siguiente turno
+    for(int i=0; i<FILAS; i++){
+        for(int j=0; j<COLUMNAS; j++){
+            if(leerChar(mapaPtr, COLUMNAS, i, j)=='x') {
+                escribirChar(mapaPtr, COLUMNAS, i, j, 'X');
+            }
+        }
+    }
 }
 //Funcion que se encargara de cargar un nivel desde el archivo niveles.txt
 //recibe el nombre del archivo y el nivel a bscar (--nivel 1, --nivel 2 etc)

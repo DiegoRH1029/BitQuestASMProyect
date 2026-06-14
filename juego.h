@@ -15,6 +15,8 @@ int detectarObj(char *mapa, int columnas, int fila, int columna, char aBuscar);
 int contCeldasLibres(char *mapa, int totCeldas);
 int posCaracter(char *mapa, int totCeldas,char c);
 int calcularPuntaje(int numMonedas, int numPasos);
+char leerChar(char *mapa, int columnas, int fila, int columna);
+void escribirChar(char *mapa, int columnas, int fila, int columna, char c);
 //Mapa de prueba
 extern char mapa[FILAS][COLUMNAS];
 //Estructuras
@@ -29,6 +31,8 @@ typedef struct {
     int puntajeTot;
     int totalMovs;
     int totalMonedas;
+    int vidas; 
+    int armas; 
 }Jugador;
 typedef struct {
     Jugador jugador;
@@ -53,9 +57,10 @@ void imprimirMapaDiseno(char *mapaPtr,int camFila,int camCol,int dirJugador);
 void moverCursor00();
 int cargarNivel(const char* nombreArchivo, const char* nivelABuscar);
 struct Camara nuevaCamara(struct Camara camActual,int fila, int col);
-void imprimirHUD(int nivel, int monedas, int llaves,int totLlaves,int totMonedas);
+void imprimirHUD(int nivel, int monedas, int llaves,int totMonedas);
 void imprimirMenu();
 void imprimirTitulo(const char* titulo, int colorTitulo,int colorBorde);
+void moverEnemigos(char *mapaPtr,Jugador *p1);
 
 //Funciones de flujo de juego
 ResultadoNivel jugando(Jugador p1, int nivelActual);

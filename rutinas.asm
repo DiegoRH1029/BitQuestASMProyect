@@ -1,12 +1,16 @@
- bits 64
- default rel
- global contarChar
- global validarMov
- global calcularPuntaje
- global detectarObj 
- global contCeldasLibres
- ;funcion que devolvera la posicion de un caracter (primera coincidencia)
- global posCaracter
+bits 64
+default rel
+global contarChar
+global validarMov
+global calcularPuntaje
+global detectarObj 
+global contCeldasLibres
+;funcion que devolvera la posicion de un caracter (primera coincidencia)
+global posCaracter
+;Funcion que lee una celday devuelve lo que tiene
+global leerChar
+;Funcion que escribe en una celda
+global escribirChar
 
  section .text
 
@@ -128,3 +132,24 @@ posCaracter:
         .noEncontrado:
         mov rax,-1
         ret 
+;Funcion que lee una celda y devuelve lo que tiene
+;char leerChar(char *mapa, int columnas, int fila,int col)
+                    ; rcx          rdx        r8       r9
+leerChar:
+    mov rax,r8      ; rax = fila
+    imul rax,rdx    ; rax = fila * columnas
+    add rax,r9      ; rax = (fila*columnas) + columna
+    xor r10,r10     ; Limpiamos r10
+    mov r10b, byte [rcx+rax] ; Leemos el caracter en esa posicion de memoria  
+    mov rax,r10    
+    ret
+;Funcion que escribe en una celda
+;char escribirChar(char *mapa, int columnas, int fila, int col,char c)
+                    ; rcx          rdx          r8         r9       [rsp+40]
+escribirChar:
+    mov rax, r8      ; rax = fila
+    imul rax,rdx    ; rax = fila * columnas
+    add rax,r9      ; rax = (fila*columnas) + columna
+    mov r10b, byte [rsp+40]
+    mov byte [rcx+rax],r10b   ; Sobreescribimos el caracter en el mapa
+    ret
